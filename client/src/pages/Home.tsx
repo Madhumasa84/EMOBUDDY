@@ -4,9 +4,12 @@ import EmotionTracker from "../components/dashboard/EmotionTracker";
 import JournalPrompt from "../components/dashboard/JournalPrompt";
 import ResourceLinks from "../components/dashboard/ResourceLinks";
 import { Link, useLocation } from "wouter";
+import { ChatProvider, useChat } from "../context/ChatContext";
+import CrisisAlert from "../components/modals/CrisisAlert";
 
-export default function Home() {
-  const [location] = useLocation();
+// Wrap the main content in this component to access the ChatContext
+function HomeContent() {
+  const { showCrisisAlert } = useChat();
   
   return (
     <>
@@ -48,6 +51,17 @@ export default function Home() {
           <ResourceLinks />
         </div>
       </div>
+      
+      {/* Crisis Alert */}
+      <CrisisAlert isVisible={showCrisisAlert} />
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <ChatProvider>
+      <HomeContent />
+    </ChatProvider>
   );
 }

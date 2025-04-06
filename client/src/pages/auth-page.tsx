@@ -127,7 +127,7 @@ export default function AuthPage() {
                       )}
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="flex flex-col space-y-3">
                     <Button className="w-full" type="submit" disabled={loginMutation.isPending}>
                       {loginMutation.isPending ? (
                         <>
@@ -137,6 +137,23 @@ export default function AuthPage() {
                       ) : (
                         "Login"
                       )}
+                    </Button>
+                    <div className="relative w-full">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-gray-300"></span>
+                      </div>
+                      <div className="relative flex justify-center text-xs">
+                        <span className="bg-white px-2 text-gray-500">OR</span>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full" 
+                      variant="outline" 
+                      type="button" 
+                      onClick={() => loginMutation.mutate({ username: "guest", password: "guest123" })}
+                      disabled={loginMutation.isPending}
+                    >
+                      Continue as Guest
                     </Button>
                   </CardFooter>
                 </form>

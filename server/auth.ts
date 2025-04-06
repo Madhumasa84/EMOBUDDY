@@ -30,7 +30,31 @@ async function comparePasswords(supplied: string, stored: string | null): Promis
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
+// Function to ensure guest user exists
+async function ensureGuestUserExists() {
+  try {
+    const guestUser = await storage.getUserByUsername("guest");
+    
+    if (!guestUser) {
+      // Create a guest user if it doesn't exist
+      const hashedPassword = await hashPassword("guest123");
+      await storage.createUser({
+        username: "guest",
+        password: hashedPassword,
+        email: "guest@example.com",
+        name: "Guest User"
+      });
+      console.log("Guest user created successfully");
+    }
+  } catch (error) {
+    console.error("Error creating guest user:", error);
+  }
+}
+
 export function setupAuth(app: Express) {
+  // Create guest user account
+  ensureGuestUserExists();
+  
   // Configure session middleware
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "emo-buddy-super-secret-key",

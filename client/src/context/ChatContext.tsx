@@ -1,7 +1,6 @@
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { ChatMessage } from "@shared/schema";
-import { getAIResponse, analyzeEmotion, detectCrisis } from "../lib/openai";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 interface ChatContextType {
   messages: ChatMessage[];
@@ -56,6 +55,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     // Add user message to state
     const userMessage: ChatMessage = {
+      id: Date.now(), // Temporary ID for client-side
       content,
       isUser: true,
       createdAt: new Date(),
@@ -69,31 +69,67 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     try {
       // Save user message to database if user is logged in
       if (user && user.id) {
-        await fetch('/api/messages', {
+        try {
+          await fetch('/api/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: userMessage.content,
+              isUser: true,
+              userId: user.id
+            }),
+            credentials: 'include',
+          });
+        } catch (error) {
+          console.error('Error saving user message:', error);
+        }
+      }
+      
+      // Check for crisis indicators
+      try {
+        const crisisResponse = await fetch('/api/detect-crisis', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            content: userMessage.content,
-            isUser: true,
-            userId: user.id
-          }),
+          body: JSON.stringify({ message: content }),
           credentials: 'include',
         });
-      }
-      
-      // Check for crisis indicators
-      const isCrisis = await detectCrisis(content);
-      if (isCrisis) {
-        setShowCrisisAlert(true);
+        
+        if (crisisResponse.ok) {
+          const crisisData = await crisisResponse.json();
+          if (crisisData.isCrisis) {
+            setShowCrisisAlert(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error detecting crisis:', error);
       }
       
       // Get AI response
-      const response = await getAIResponse(content, messages);
+      const chatResponse = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: content,
+          history: messages.slice(-5) // Send last 5 messages for context
+        }),
+        credentials: 'include',
+      });
+      
+      if (!chatResponse.ok) {
+        throw new Error('Failed to get chat response');
+      }
+      
+      const response = await chatResponse.json();
       
       // Add AI response to state
       const botMessage: ChatMessage = {
+        id: Date.now() + 1, // Temporary ID for client-side
         content: response.content,
         isUser: false,
         emotion: response.emotion,
@@ -104,19 +140,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       
       // Save bot message to database if user is logged in
       if (user && user.id) {
-        await fetch('/api/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            content: botMessage.content,
-            isUser: false,
-            emotion: botMessage.emotion,
-            userId: user.id
-          }),
-          credentials: 'include',
-        });
+        try {
+          await fetch('/api/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: botMessage.content,
+              isUser: false,
+              emotion: botMessage.emotion,
+              userId: user.id
+            }),
+            credentials: 'include',
+          });
+        } catch (error) {
+          console.error('Error saving bot message:', error);
+        }
       }
     } catch (error) {
       console.error('Error in chat process:', error);
@@ -125,6 +165,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setMessages(prev => [
         ...prev,
         {
+          id: Date.now() + 2, // Temporary ID for client-side
           content: "I'm sorry, I'm having trouble responding right now. Please try again in a moment.",
           isUser: false,
           emotion: "neutral",
