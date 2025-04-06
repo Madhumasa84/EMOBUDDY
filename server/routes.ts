@@ -1,17 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import OpenAI from "openai";
 import { z } from "zod";
 import { insertUserSchema, insertMessageSchema, insertJournalSchema, insertEmotionTrackingSchema } from "@shared/schema";
 import { setupAuth } from "./auth";
+import { generateResponse, analyzeEmotion, detectCrisis } from "./chatbot";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize OpenAI
-  const openai = new OpenAI({ 
-    apiKey: process.env.OPENAI_API_KEY || 'your-api-key-placeholder'
-  });
-
   // Set up authentication routes using Passport
   setupAuth(app);
 
@@ -20,60 +15,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { message, history } = req.body;
       
-      // Format conversation history for OpenAI
-      const formattedHistory = history.map((msg: any) => ({
-        role: msg.isUser ? 'user' : 'assistant',
-        content: msg.content
-      }));
+      // Use the open-source chatbot implementation
+      const response = generateResponse(message, history);
       
-      // System message to guide the AI behavior
-      const systemMessage = {
-        role: 'system',
-        content: `You are EmoBuddy, an AI emotional support companion. Your purpose is to provide empathetic, 
-        supportive responses to users who may be experiencing emotional distress. 
-        Be compassionate, non-judgmental, and helpful. Use a warm, friendly tone.
-        Provide practical advice when appropriate, but prioritize emotional validation. 
-        If the user expresses severe distress or suicidal thoughts, gently suggest 
-        professional resources but continue the conversation supportively.
-        Analyze the emotional state of the user and respond with appropriate empathy.
-        Keep responses concise (1-3 paragraphs maximum).`
-      };
-      
-      // Current user message
-      const userMessage = { role: 'user', content: message };
-      
-      // Get response from OpenAI
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [systemMessage, ...formattedHistory, userMessage],
-        max_tokens: 500,
-        temperature: 0.7,
+      res.json({ 
+        content: response.content, 
+        emotion: response.emotion
       });
       
-      const response = completion.choices[0].message.content;
-      
-      // Analyze the emotion in the user's message
-      const emotionAnalysis = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: 'system',
-            content: `Analyze the following message and determine the most appropriate emotional tone to respond with.
-            Choose from: empathetic, supportive, compassionate, calm, neutral.
-            Respond with only one word corresponding to the emotion.`
-          },
-          { role: 'user', content: message }
-        ],
-        max_tokens: 10,
-        temperature: 0.3,
-      });
-      
-      const emotion = emotionAnalysis.choices[0].message.content?.toLowerCase() || 'supportive';
-      
-      res.json({ content: response, emotion });
     } catch (error) {
       console.error('Error generating chat response:', error);
-      res.status(500).json({ message: 'Failed to generate chat response' });
+      res.status(500).json({ 
+        content: "I'm having trouble processing that right now. How else can I support you today?", 
+        emotion: "supportive" 
+      });
     }
   });
 
@@ -82,27 +37,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { message } = req.body;
       
-      const emotionAnalysis = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: 'system',
-            content: `Analyze the emotional content of the following message. 
-            Return a JSON object with these properties:
-            - emotion: The predominant emotion (happy, sad, angry, anxious, neutral, calm)
-            - intensity: A number from 1-5 indicating intensity (1=mild, 5=intense)
-            - label: A human-readable label for the emotion
-            - color: The appropriate hex color code for this emotion
-            Use: #FCD34D for happy, #93C5FD for sad, #F87171 for angry, #A78BFA for anxious, #9CA3AF for neutral, #6EE7B7 for calm.`
-          },
-          { role: 'user', content: message }
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 100,
-        temperature: 0.3,
-      });
-      
-      const analysis = JSON.parse(emotionAnalysis.choices[0].message.content || '{}');
+      // Use the open-source emotion analysis implementation
+      const analysis = analyzeEmotion(message);
       
       res.json(analysis);
     } catch (error) {
@@ -121,29 +57,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { message } = req.body;
       
-      const crisisDetection = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: 'system',
-            content: `You are a crisis detection system. Analyze the following message and determine if it contains
-            indications of suicidal ideation, self-harm, or severe mental health crisis that requires immediate 
-            attention. Return a JSON object with a single boolean property "isCrisis" set to true if
-            crisis indicators are detected, or false if not.
-
-            Examples of crisis indicators: mentions of suicide, wanting to die, plans to harm oneself,
-            feeling hopeless with no reason to live, giving away possessions, saying goodbye, etc.`
-          },
-          { role: 'user', content: message }
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 50,
-        temperature: 0.1,
-      });
+      // Use the open-source crisis detection implementation
+      const isCrisis = detectCrisis(message);
       
-      const result = JSON.parse(crisisDetection.choices[0].message.content || '{}');
-      
-      res.json({ isCrisis: result.isCrisis || false });
+      res.json({ isCrisis });
     } catch (error) {
       console.error('Error detecting crisis:', error);
       res.status(500).json({ isCrisis: false });
@@ -212,22 +129,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'userId is required' });
       }
       
-      // Analyze emotion in journal content
-      const emotionAnalysis = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: 'system',
-            content: `Analyze the emotional content of the following journal entry. 
-            Return a single word representing the predominant emotion (happy, sad, angry, anxious, neutral, calm)`
-          },
-          { role: 'user', content: journalData.content }
-        ],
-        max_tokens: 10,
-        temperature: 0.3,
-      });
-      
-      const emotion = emotionAnalysis.choices[0].message.content?.toLowerCase() || 'neutral';
+      // Analyze emotion in journal content using open-source implementation
+      const emotionResult = analyzeEmotion(journalData.content);
+      const emotion = emotionResult.emotion;
       
       const journal = await storage.createJournal({
         ...journalData,
