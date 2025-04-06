@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { useAuth } from "../context/AuthContext";
 import {
   LineChart,
   Line,
@@ -43,37 +44,42 @@ export default function Reports() {
   const [emotionData, setEmotionData] = useState<EmotionData[]>([]);
   const [emotionSummary, setEmotionSummary] = useState<EmotionSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     setLoading(true);
     
-    // Fetch emotion data for the selected time range
-    fetch(`/api/emotions/report?range=${timeRange}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.emotions) {
-          setEmotionData(data.emotions);
-          
-          // Calculate emotion summary
-          const summary: Record<string, number> = {};
-          data.emotions.forEach((item: EmotionData) => {
-            summary[item.emotion] = (summary[item.emotion] || 0) + 1;
-          });
-          
-          const summaryData = Object.entries(summary).map(([emotion, count]) => ({
-            emotion,
-            count
-          }));
-          
-          setEmotionSummary(summaryData);
-        }
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching emotion data:', error);
-        setLoading(false);
-      });
-  }, [timeRange]);
+    if (user && user.id) {
+      // Fetch emotion data for the selected time range
+      fetch(`/api/emotions/report?range=${timeRange}&userId=${user.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.emotions) {
+            setEmotionData(data.emotions);
+            
+            // Calculate emotion summary
+            const summary: Record<string, number> = {};
+            data.emotions.forEach((item: EmotionData) => {
+              summary[item.emotion] = (summary[item.emotion] || 0) + 1;
+            });
+            
+            const summaryData = Object.entries(summary).map(([emotion, count]) => ({
+              emotion,
+              count
+            }));
+            
+            setEmotionSummary(summaryData);
+          }
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching emotion data:', error);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, [timeRange, user]);
 
   // Mock data for visualization if no data is available
   const mockEmotionData: EmotionData[] = [

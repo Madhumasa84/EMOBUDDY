@@ -37,8 +37,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     ]);
     
     // Fetch conversation history if user is logged in
-    if (user) {
-      fetch('/api/messages')
+    if (user && user.id) {
+      fetch(`/api/messages?userId=${user.id}`)
         .then(res => res.json())
         .then(data => {
           if (data.messages && data.messages.length > 0) {
@@ -67,18 +67,21 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setIsTyping(true);
     
     try {
-      // Save user message to database
-      await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: userMessage.content,
-          isUser: true,
-        }),
-        credentials: 'include',
-      });
+      // Save user message to database if user is logged in
+      if (user && user.id) {
+        await fetch('/api/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: userMessage.content,
+            isUser: true,
+            userId: user.id
+          }),
+          credentials: 'include',
+        });
+      }
       
       // Check for crisis indicators
       const isCrisis = await detectCrisis(content);
@@ -99,19 +102,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       
       setMessages(prev => [...prev, botMessage]);
       
-      // Save bot message to database
-      await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: botMessage.content,
-          isUser: false,
-          emotion: botMessage.emotion,
-        }),
-        credentials: 'include',
-      });
+      // Save bot message to database if user is logged in
+      if (user && user.id) {
+        await fetch('/api/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: botMessage.content,
+            isUser: false,
+            emotion: botMessage.emotion,
+            userId: user.id
+          }),
+          credentials: 'include',
+        });
+      }
     } catch (error) {
       console.error('Error in chat process:', error);
       

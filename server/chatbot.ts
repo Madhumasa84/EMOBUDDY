@@ -15,6 +15,18 @@ const patterns = [
     emotion: 'friendly'
   },
   {
+    // Wellness recommendations
+    pattern: '(recommend|suggest|advice|help me feel better|need help|what should I do|how to improve|tips)',
+    responses: [
+      "I'd recommend trying some of these positive activities: 1) Take a 15-minute walk outside in nature, 2) Practice deep breathing for 5 minutes, 3) Call a supportive friend or family member, 4) Eat a nutritious meal with plenty of vegetables and protein, 5) Write down three things you're grateful for today.",
+      "Here are some science-backed activities that can help: 1) Meditate for just 10 minutes, 2) Get some physical exercise - even a short walk helps, 3) Connect with a friend or family member, 4) Spend time in nature, 5) Ensure you're eating regular, nutritious meals with plenty of fruits and vegetables.",
+      "I'd suggest these mood-boosting activities: 1) Physical movement - try a quick walk or stretching, 2) Social connection - reach out to someone who makes you feel good, 3) Mindfulness - take a few minutes to focus on your breathing, 4) Healthy eating - make sure you're nourishing your body with balanced meals, 5) Gratitude practice - reflect on what's going well in your life.",
+      "Some positive activities you might try: 1) Get outside for some fresh air and a walk, 2) Call a friend or family member for a chat, 3) Practice meditation or deep breathing, 4) Make sure you're eating regular, balanced meals, 5) Do something creative like drawing, writing, or making music.",
+      "I'd recommend these evidence-based approaches: 1) Physical activity - even a short walk can boost your mood, 2) Social connection - reach out to supportive friends or family, 3) Mindfulness meditation - try a guided session, 4) Nutritious eating - fuel your body with healthy foods, 5) Sleep hygiene - aim for 7-9 hours of quality sleep."
+    ],
+    emotion: 'encouraging'
+  },
+  {
     // Feeling good
     pattern: '(good|great|excellent|amazing|wonderful|fantastic|happy|joy|excited|positive)',
     responses: [

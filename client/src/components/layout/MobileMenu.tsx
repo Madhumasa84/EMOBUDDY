@@ -55,13 +55,20 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           </Link>
           
           {user ? (
-            <button 
-              className="block w-full text-left py-2 text-neutral-600 hover:text-primary-500"
-              onClick={handleLogout}
-              disabled={logoutMutation.isPending}
-            >
-              {logoutMutation.isPending ? "Signing out..." : "Sign Out"}
-            </button>
+            <>
+              <Link href="/profile">
+                <a className="block py-2 text-neutral-600 hover:text-primary-500 border-b border-neutral-100" onClick={onClose}>
+                  Your Profile
+                </a>
+              </Link>
+              <button 
+                className="block w-full text-left py-2 text-neutral-600 hover:text-primary-500"
+                onClick={handleLogout}
+                disabled={logoutMutation.isPending}
+              >
+                {logoutMutation.isPending ? "Signing out..." : "Sign Out"}
+              </button>
+            </>
           ) : (
             <Link href="/auth">
               <a className="block py-2 text-neutral-600 hover:text-primary-500" onClick={onClose}>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { EmotionTrack } from "@shared/schema";
+import { useAuth } from "@/context/AuthContext";
 
 // Emotion data
 const emotions = [
@@ -15,20 +16,23 @@ const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 export default function EmotionTracker() {
   const [selectedEmotion, setSelectedEmotion] = useState<string>("stressed");
   const [weekData, setWeekData] = useState<EmotionTrack[]>([]);
+  const { user } = useAuth();
   
   // Fetch weekly emotion data
   useEffect(() => {
-    fetch('/api/emotions/weekly')
-      .then(res => res.json())
-      .then(data => {
-        if (data.emotions) {
-          setWeekData(data.emotions);
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching weekly emotions:', error);
-      });
-  }, []);
+    if (user && user.id) {
+      fetch(`/api/emotions/weekly?userId=${user.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.emotions) {
+            setWeekData(data.emotions);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching weekly emotions:', error);
+        });
+    }
+  }, [user]);
 
   // Mock data for visualization if no data is available
   const mockWeekData = [
@@ -48,21 +52,36 @@ export default function EmotionTracker() {
   const trackEmotion = (emotionId: string) => {
     setSelectedEmotion(emotionId);
     
-    // Record emotion in the database
-    fetch('/api/emotions/track', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        emotion: emotionId,
-        intensity: 5, // Default to high intensity
-      }),
-      credentials: 'include',
-    })
-    .catch(error => {
-      console.error('Error tracking emotion:', error);
-    });
+    // Record emotion in the database if user is logged in
+    if (user && user.id) {
+      fetch('/api/emotions/track', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          emotion: emotionId,
+          intensity: 5, // Default to high intensity
+          userId: user.id
+        }),
+        credentials: 'include',
+      })
+      .then(response => {
+        if (response.ok) {
+          // Refresh the weekly emotions data after tracking
+          fetch(`/api/emotions/weekly?userId=${user.id}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.emotions) {
+                setWeekData(data.emotions);
+              }
+            });
+        }
+      })
+      .catch(error => {
+        console.error('Error tracking emotion:', error);
+      });
+    }
   };
 
   // Get emotion color

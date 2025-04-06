@@ -284,6 +284,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User profile routes
+  app.put('/api/user/profile', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      const { username, email, userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: 'userId is required' });
+      }
+      
+      // Validate data
+      if (!username || username.trim() === '') {
+        return res.status(400).json({ message: 'Username is required' });
+      }
+      
+      // Update user in storage
+      const updatedUser = await storage.updateUser(parseInt(userId), {
+        username,
+        email: email || ''
+      });
+      
+      res.json({ user: updatedUser });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      res.status(500).json({ message: 'Failed to update profile' });
+    }
+  });
+  
   // Resources routes
   app.get('/api/resources', async (req, res) => {
     try {

@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Textarea } from "../components/ui/textarea";
 import { useToast } from "../hooks/use-toast";
 import { Journal } from "@shared/schema";
+import { useAuth } from "../context/AuthContext";
 
 export default function JournalPage() {
   const [searchParams] = useLocation();
@@ -16,6 +17,7 @@ export default function JournalPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("write");
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Fetch journal prompt if promptId is provided
   useEffect(() => {
@@ -35,23 +37,34 @@ export default function JournalPage() {
 
   // Fetch past journals
   useEffect(() => {
-    fetch('/api/journal')
-      .then(res => res.json())
-      .then(data => {
-        if (data.journals) {
-          setJournals(data.journals);
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching journals:', error);
-      });
-  }, []);
+    if (user && user.id) {
+      fetch(`/api/journal?userId=${user.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.journals) {
+            setJournals(data.journals);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching journals:', error);
+        });
+    }
+  }, [user]);
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) {
       toast({
         title: "Missing information",
         description: "Please provide both a title and content for your journal entry.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user || !user.id) {
+      toast({
+        title: "Authentication required",
+        description: "You need to be logged in to save journal entries.",
         variant: "destructive",
       });
       return;
@@ -68,6 +81,7 @@ export default function JournalPage() {
         body: JSON.stringify({
           title,
           content,
+          userId: user.id
         }),
         credentials: 'include',
       });

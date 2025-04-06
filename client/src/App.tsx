@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Journal from "./pages/Journal";
 import Reports from "./pages/Reports";
 import Resources from "./pages/Resources";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/not-found";
 import AuthPage from "./pages/auth-page";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -44,6 +45,14 @@ function Router() {
         component={() => (
           <Layout>
             <Resources />
+          </Layout>
+        )} 
+      />
+      <ProtectedRoute 
+        path="/profile" 
+        component={() => (
+          <Layout>
+            <Profile />
           </Layout>
         )} 
       />
