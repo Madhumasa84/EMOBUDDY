@@ -1,0 +1,58 @@
+EmoBuddy: AI-Powered Emotional Support Companion
+Project Overview
+EmoBuddy is a web-based AI chatbot designed to provide emotional support through text-based interactions. The chatbot uses Natural Language Processing (NLP) and emotion recognition to understand user emotions and respond empathetically. The platform is built with a focus on mental well-being, offering users a safe, anonymous space to express their feelings.
+
+Technologies Used
+Frontend: React.js with Vite, Tailwind CSS
+Backend: Node.js with Express.js
+Database: Firebase (for user authentication and data storage)
+AI & NLP: OpenAI API or TensorFlow.js for emotion detection
+Security: AES encryption for data privacy
+Hosting & Deployment: Vercel or Netlify for frontend, Firebase for backend
+Key Features
+AI-Powered Emotional Support
+
+Uses NLP and emotion recognition to analyze user text input.
+Provides empathetic, real-time responses based on detected emotions.
+Supports text, emojis, stickers, and GIFs for a human-like experience.
+Journaling & Mental Health Reports
+
+Allows users to write daily journals and track emotions.
+Generates weekly, monthly, and yearly reports to identify emotional patterns.
+Anonymity & Privacy
+
+Users can sign in through Google or use Guest Mode for complete anonymity.
+Conversations are linked to a random ID, ensuring privacy.
+AES encryption protects stored user data.
+Suicide Prevention & Crisis Support
+
+If the chatbot detects suicidal thoughts, it can:
+Send an emergency alert to nearby suicide prevention NGOs.
+Provide hotline numbers and self-help exercises for immediate assistance.
+Emotional Feedback with Text-to-Speech (Future Enhancement)
+
+Users will be able to hear responses via text-to-speech (TTS) for a more personal experience.
+EmoBuddy will adjust its voice tone based on detected emotions.
+Voice-Based Control & Emotion Recognition (Future Enhancement)
+
+Users will be able to talk to EmoBuddy via voice commands instead of typing.
+The chatbot will analyze speech patterns, tone, and pitch to detect emotions.
+Includes voice journaling, where users can record their emotions and receive insights.
+Multilingual Support (Future Enhancement)
+
+EmoBuddy will support multiple languages, making it accessible to a wider audience.
+Engaging & Fun Interaction
+
+Users can interact using emojis, stickers, and GIFs to make conversations more engaging.
+Includes motivational messages, relaxation techniques, and guided breathing exercises.
+Future Enhancements
+Voice-based emotional support
+Multilingual chatbot capabilities
+Integration with wearable devices to analyze biometric data for stress levels
+AI-driven personalized mental health suggestions
+Impact & Benefits
+Provides real-time emotional support in a safe, private space.
+Encourages self-reflection through journals and mental health reports.
+Connects users with emergency mental health support when needed.
+Ensures anonymity and privacy for users seeking help.
+This project is designed to create a positive impact on mental well-being by offering a safe, AI-powered companion that listens, understands, and provides compassionate responses to users in need.
